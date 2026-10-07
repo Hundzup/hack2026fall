@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head><meta charset="UTF-8"><title>ML предсказание</title></head>
+<body>
+  <nav>
+    <a href="/index.html">Главная</a> |
+    <a href="/about.html">О проекте</a> |
+    <a href="/predict.html">ML-предсказание</a>
+  </nav>
+  <h1>Линейная регрессия</h1>
+  <p>y = 2*x1 + 3*x2 + 5</p>
+  <label>x1: <input id="f1" type="number" value="3" step="0.1"></label>
+  <label>x2: <input id="f2" type="number" value="2" step="0.1"></label>
+  <button id="btn">Предсказать</button>
+  <p>Результат: <b id="result">—</b></p>
+
+  <script>
+    document.getElementById('btn').addEventListener('click', async () => {
+      const f1 = parseFloat(document.getElementById('f1').value);
+      const f2 = parseFloat(document.getElementById('f2').value);
+      const res = await fetch('/api/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ features: [f1, f2] })
+      });
+      const data = await res.json();
+      document.getElementById('result').textContent =
+        res.ok ? data.prediction.toFixed(4) : `ошибка: ${data}`;
+    });
+  </script>
+</body>
+</html>
