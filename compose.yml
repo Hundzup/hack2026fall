@@ -1,0 +1,43 @@
+name: risk-analysis
+
+services:
+  frontend:
+    build: frontend
+    volumes:
+      - frontend-acme:/var/lib/angie/acme
+    ports:
+      - 80:80
+      - 443:443
+    networks:
+      - net
+  backend:
+    build: backend
+    env_file:
+      - backend/.env
+    depends_on:
+      - db
+    networks:
+      - net
+  ml:
+    build: ml
+    env_file:
+      - ml/.env
+    depends_on:
+      - db
+    networks:
+      - net
+  db:
+    image: postgres:18
+    volumes:
+      - db_data:/var/lib/postgres:rw
+    ports:
+      - "127.0.0.1:5432:5432/tcp"
+    networks:
+      - net
+
+networks:
+  net:
+
+volumes:
+  frontend-acme:
+  db_data:

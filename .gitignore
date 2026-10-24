@@ -1,0 +1,11 @@
+.env
+
+# Pyrhon
+venv/
+__pycache__/
+
+# Node
+node_modules/
+
+# Other
+test/

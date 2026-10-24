@@ -1,18 +1,12 @@
-# Запуск проекта
+# Анализатор рисков оттока
 
-## 1. ML-сервис (Python)
-```
-cd ml
-uvicorn app:app --host 127.0.0.1 --port 8001
-```
+<http://localhost:80>
 
-## 2. Go-бэкенд
-```
-cd backend
-go run .\cmd\server\
+## Запуск проекта
+
+```bash
+# В корне репозитория
+docker compose up
 ```
 
-## 3. Открыть в браузере
-```
-http://localhost:8080
-```
+## Открыть в браузере
