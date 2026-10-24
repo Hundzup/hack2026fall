@@ -45,10 +45,10 @@ def feat_low_replenishment(s: Snapshot) -> pd.Series:
 
 # Реестр признаков: точка расширения
 FEATURES = {
-    "no_autoprolong_share": dict(fn=feat_no_autoprolong_share, weight=0.10, title="Отключено автопродление"),
-    "expiring_soon":        dict(fn=feat_expiring_soon,        weight=0.50, title="Близко истекает услуга"),
-    "prolong_wait":         dict(fn=feat_prolong_wait,         weight=0.15, title="Услуга ждёт оплаты"),
-    "insufficient_funds":   dict(fn=feat_insufficient_funds,   weight=0.20, title="Не хватает средств"),
-    "failed_prolong_share": dict(fn=feat_failed_prolong_share, weight=0.10, title="История неоплаченных продлений"),
-    "low_replenishment":    dict(fn=feat_low_replenishment,    weight=0.05, title="Низкие пополнения"),
+    "no_autoprolong_share": dict(fn=feat_no_autoprolong_share, weight=1, title="Отключено автопродление"),
+    "expiring_soon":        dict(fn=feat_expiring_soon,        weight=1, title="Близко истекает услуга"),
+    "prolong_wait":         dict(fn=feat_prolong_wait,         weight=1, title="Услуга ждёт оплаты"),
+    "insufficient_funds":   dict(fn=feat_insufficient_funds,   weight=1, title="Не хватает средств"),
+    "failed_prolong_share": dict(fn=feat_failed_prolong_share, weight=1, title="История неоплаченных продлений"),
+    "low_replenishment":    dict(fn=feat_low_replenishment,    weight=1, title="Низкие пополнения"),
 }
