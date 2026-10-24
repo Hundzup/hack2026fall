@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Тень -->
+  <rect x="8" y="8" width="86" height="86" rx="22" fill="#b3b3b3" />
+  <!-- Белый квадрат -->
+  <rect x="4" y="4" width="86" height="86" rx="22" fill="#ffffff" />
+  <!-- Буква é -->
+  <text x="47" y="70" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="64" fill="#000000" text-anchor="middle">é</text>
+</svg>

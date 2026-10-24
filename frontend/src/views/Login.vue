@@ -2,7 +2,7 @@
   <div class="login-wrapper">
     <div class="login-card">
       
-      <!-- Левая панель -->
+      
       <div class="left-panel">
         <div class="header">
           <h1>{{ t.title }}</h1>
@@ -10,7 +10,7 @@
         </div>
         
         <div class="left-footer">
-          <!-- Текстовый логотип -->
+          
           <div class="logo-box">
             <span class="logo-letter">é</span>
           </div>
@@ -38,11 +38,11 @@
         </div>
       </div>
 
-      <!-- Правая панель -->
+      
       <div class="right-panel">
         <div class="form-container">
           <form @submit.prevent="handleLogin" class="login-form">
-            <!-- Добавлено поле логина и пароля -->
+      
             <input 
               v-model="username" 
               type="text" 
@@ -126,7 +126,7 @@ const setLang = (lang) => {
   currentLang.value = lang
 }
 
-// ── Отправка формы ──
+
 const handleLogin = async () => {
   try {
 
@@ -198,7 +198,7 @@ const handleLogin = async () => {
   gap: 16px;
 }
 
-/* Логотип */
+
 .logo-box {
   width: 44px;
   height: 44px;
@@ -314,6 +314,7 @@ const handleLogin = async () => {
   background-color: #999999;
 }
 
+/* ── Нижняя часть правой панели ── */
 .right-footer {
   display: flex;
   flex-direction: column;
@@ -373,7 +374,7 @@ const handleLogin = async () => {
   color: #ffffff;
 }
 
-
+/* ── Адаптив для мобилок ── */
 @media (max-width: 600px) {
   .login-card {
     flex-direction: column;
@@ -391,24 +392,25 @@ const handleLogin = async () => {
     padding-top: 48px;
   }
 }
-
+/* Стили для картинок флагов */
 .flag-icon {
   width: 20px;
   height: 20px;
   border-radius: 50%;
   object-fit: cover;
   display: block;
-
+  /* Добавляем легкую рамку, чтобы белые флаги не сливались с фоном */
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1); 
 }
 
-
+/* Уменьшаем padding у кнопок, так как теперь там только иконка */
 .lang-btn {
   padding: 6px 12px; 
 }
 
+/* Делаем кнопки в виде кружочков */
 .lang-switch {
-  gap: 8px; 
+  gap: 8px; /* Расстояние между флагами */
   padding: 4px;
   background-color: #222222;
 }

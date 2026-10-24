@@ -4,9 +4,21 @@ import Dashboard from './views/Dashboard.vue'
 import Settings from './views/Settings.vue'
 
 const routes = [
-  { path: '/login', component: Login },
-  { path: '/', component: Dashboard, meta: { requiresAuth: true } },
-  { path: '/settings', component: Settings, meta: { requiresAuth: true } }
+  { 
+    path: '/login', 
+    component: Login,
+    meta: { title: 'Вход — Aeza' } 
+  },
+  { 
+    path: '/', 
+    component: Dashboard, 
+    meta: { title: 'Дашборд — Aeza', requiresAuth: true } 
+  },
+  { 
+    path: '/settings', 
+    component: Settings, 
+    meta: { title: 'Настройки — Aeza', requiresAuth: true } 
+  }
 ]
 
 const router = createRouter({
@@ -19,6 +31,11 @@ router.beforeEach((to, from, next) => {
   if (to.meta.requiresAuth && !isAuth) next('/login')
   else if (to.path === '/login' && isAuth) next('/')
   else next()
+})
+
+router.afterEach((to, from) => {
+  const defaultTitle = 'Aeza | Панель рисков'
+  document.title = to.meta.title || defaultTitle
 })
 
 export default router
