@@ -1,51 +1,54 @@
 from contextlib import asynccontextmanager
-import joblib
-import numpy as np
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
+import pandas as pd
 
-MODEL_PATH = "model.pkl"
-_model = None
-
+from schemas import AnalyzeRequest, AnalyzeResponse
+from preprocess import preprocess
+from scoring import ModelSettings, score, validate_settings
+from money import expected_loss
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global _model
-    _model = joblib.load(MODEL_PATH)
-    print(f"model loaded from {MODEL_PATH}")
+    print("ML Service is ready")
     yield
-    _model = None
 
-
-app = FastAPI(title="ML Service", lifespan=lifespan)
-
-
-class PredictRequest(BaseModel):
-    features: list[float] = Field(..., min_length=1)
-
-
-class PredictResponse(BaseModel):
-    prediction: float
-    model: str = "linear_regression"
-
+app = FastAPI(title="ML Risk Analyzer", lifespan=lifespan)
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "model_loaded": _model is not None}
+    return {"status": "ok"}
 
+@app.post("/analyze", response_model=AnalyzeResponse)
+def analyze(req: AnalyzeRequest):
+    try:
+        # 1. Инициализируем настройки и валидируем
+        cfg = ModelSettings(**req.settings)
+        validate_settings(cfg)
 
-@app.post("/predict", response_model=PredictResponse)
-def predict(req: PredictRequest):
-    if _model is None:
-        raise HTTPException(status_code=503, detail="model not loaded")
+        # 2. Препроцессинг
+        snap = preprocess(req.raw_data)
 
-    expected = _model.n_features_in_
-    if len(req.features) != expected:
-        raise HTTPException(
-            status_code=400,
-            detail=f"expected {expected} features, got {len(req.features)}",
-        )
+        # 3. Скоринг
+        scored_df = score(snap, cfg)
 
-    X = np.array(req.features, dtype=float).reshape(1, -1)
-    y = float(_model.predict(X)[0])
-    return PredictResponse(prediction=y)
+        # 4. Расчет денежных потерь
+        loss_df = expected_loss(snap, scored_df)
+
+        # 5. Сборка сводки
+        levels = scored_df["risk_level"].value_counts().reindex(["low", "medium", "high"], fill_value=0).to_dict()
+        summary = {
+            "customers_total": len(scored_df),
+            "customers_by_level": {k: int(v) for k, v in levels.items()},
+            "expected_loss_total_eur": round(float(loss_df["expected_loss_eur"].sum()), 2),
+            "exposure_total_eur": round(float(loss_df["exposure_eur"].sum()), 2),
+        }
+
+        return {
+            "summary": summary,
+            "scored": scored_df.to_dict(orient="records"),
+            "loss": loss_df.to_dict(orient="records")
+        }
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
