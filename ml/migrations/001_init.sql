@@ -7,3 +7,9 @@ CREATE TABLE IF NOT EXISTS customers (
     risk_level              TEXT,
     reasons                 jsonb
 );
+
+CREATE TABLE IF NOT EXISTS model_weights (
+    feature_name TEXT PRIMARY KEY,
+    weight NUMERIC NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

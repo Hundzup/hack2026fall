@@ -126,8 +126,65 @@ def get_raw_data_from_db() -> dict:
     return raw
 
 def save_settings_to_db(settings: dict):
-    """ЗАГЛУШКА: Сохранение весов в PostgreSQL"""
-    pass
+    """
+    Сохраняет веса каждой фичи в отдельную строку таблицы model_weights.
+    Сохраняет глобальные пороги в model_thresholds.
+    """
+    weights = settings.get("weights", {})
+    low_max = float(settings.get("low_max", 0.2))
+    high_min = float(settings.get("high_min", 0.3))
+
+    try:
+        conn = psycopg2.connect(
+            host=DB_HOST, port=DB_PORT, dbname=DB_NAME, user=DB_USER, password=DB_PASS
+        )
+        cursor = conn.cursor()
+
+        # 1. СОХРАНЕНИЕ ВЕСОВ (Upsert для каждой фичи)
+        if weights:
+            # Подготавливаем данные для пакетной вставки: [(name, weight), ...]
+            weight_data = [(k, float(v)) for k, v in weights.items()]
+            
+            upsert_weights_query = """
+                INSERT INTO model_weights (feature_name, weight)
+                VALUES %s
+                ON CONFLICT (feature_name) DO UPDATE SET
+                    weight = EXCLUDED.weight,
+                    updated_at = CURRENT_TIMESTAMP;
+            """
+            # execute_values делает один быстрый запрос на все фичи сразу
+            execute_values(cursor, upsert_weights_query, weight_data)
+
+            # 2. УДАЛЕНИЕ УСТАРЕВШИХ ФИЧЕЙ (которых нет в текущем запросе)
+            # Это нужно, если вы удалили признак из features.py
+            feature_names = list(weights.keys())
+            delete_stale_query = "DELETE FROM model_weights WHERE feature_name NOT IN %s;"
+            cursor.execute(delete_stale_query, (tuple(feature_names),))
+
+        # 3. СОХРАНЕНИЕ ПОРОГОВ
+        upsert_thresholds_query = """
+            INSERT INTO model_thresholds (id, low_max, high_min)
+            VALUES (1, %s, %s)
+            ON CONFLICT (id) DO UPDATE SET
+                low_max = EXCLUDED.low_max,
+                high_min = EXCLUDED.high_min,
+                updated_at = CURRENT_TIMESTAMP;
+        """
+        cursor.execute(upsert_thresholds_query, (low_max, high_min))
+
+        conn.commit()
+        print(f"[DB] Успешно сохранено {len(weights)} весов и пороги модели.")
+
+    except Exception as e:
+        if 'conn' in locals():
+            conn.rollback()
+        print(f"[DB ERROR] Не удалось сохранить настройки: {e}")
+        raise e
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
 
 def save_scores_to_db(scores: list[dict]):
     """
