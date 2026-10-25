@@ -16,10 +16,10 @@ type CustomersHandler struct {
 	DB *pgxpool.Pool
 }
 
+// Вообще это можно было всё в int закинуть, но уже пофиг)
 type Customer struct {
-	ID int `db:"id" json:"id" example:"42"`
-	// Вообще это можно было всё в int закинуть, но уже пофиг)
-	Balance      float32  `db:"balance_eur" json:"balance_eur" example:"1337"`
+	ID           int      `db:"customer_id" json:"customer_id" example:"42"`
+		Balance      float32  `db:"balance_eur" json:"balance_eur" example:"1337"`
 	TotalDeposit float32  `db:"total_replenished_eur" json:"total_replenished_eur" example:"100500"`
 	RiskScore    float32  `db:"risk_score" json:"risk_score" example:"67"`
 	RiskLevel    string   `db:"risk_level" json:"risk_level" example:"high"`
