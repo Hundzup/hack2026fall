@@ -24,48 +24,48 @@ func main() {
 
 	dsn := os.Getenv("DATABASE_URL")
 	mlURL := os.Getenv("ML_URL")
-	port := os.Getenv("PORT")
+host := os.Getenv("LISTEN_HOST")
+	if host == "" {
+		host = "127.0.0.1"
+	}
+	port := os.Getenv("LISTEN_PORT")
 	if port == "" {
 		port = "8080"
 	}
 
 	ctx := context.Background()
+logger := log.Default()
 
+logger.Print("Try to connect to DB")
 	pool, err := db.NewPool(ctx, dsn)
 	if err != nil {
-		log.Fatalf("db: %v", err)
+		logger.Fatalf("db: %v", err)
 	}
 	defer pool.Close()
 
 	mlClient := ml.NewClient(mlURL)
 
-	itemsH := &handlers.ItemsHandler{DB: pool}
-	predictH := &handlers.PredictHandler{ML: mlClient}
+	customersHandler := &handlers.CustomersHandler{DB: pool}
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	r.Route("/api", func(r chi.Router) {
-		r.Get("/items", itemsH.List)
-		r.Post("/items", itemsH.Create)
-		r.Post("/predict", predictH.Predict)
+	r.Route("/api/v1", func(r chi.Router) {
+		r.Get("/customers", customersHandler.List)
+		r.Get("/customers/{customerID}", customersHandler.GetCustomer)
 	})
 
-	// статика
-	fs := http.FileServer(http.Dir("../frontend"))
-	r.Handle("/*", fs)
-
 	srv := &http.Server{
-		Addr:              ":" + port,
+		Addr:              host + ":" + port,
 		Handler:           r,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
 	go func() {
-		log.Printf("server listening on :%s", port)
+		logger.Printf("server is listening on %s", srv.Addr)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("listen: %v", err)
+			logger.Fatalf("listen: %v", err)
 		}
 	}()
 
