@@ -1,13 +1,21 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Response
 import pandas as pd
-
+import psycopg2
+import json
+from psycopg2.extras import execute_values
 from schemas import AnalyzeRequest, AnalyzeResponse, UsersRiskResponse, UserRiskMetrics
 from schemas import UpdateSettingsRequest
 from preprocess import preprocess
 from scoring import ModelSettings, score, validate_settings
 from money import expected_loss
 
+
+DB_HOST = "localhost"
+DB_PORT = "5432"
+DB_NAME = "hackathon_db"
+DB_USER = "postgres"
+DB_PASS = "postgres"
 
 
 @asynccontextmanager
@@ -122,30 +130,100 @@ def save_settings_to_db(settings: dict):
     pass
 
 def save_scores_to_db(scores: list[dict]):
-    """ЗАГЛУШКА: Сохранение скоринга в PostgreSQL"""
-    pass
+    """
+    Сохраняет (или обновляет) результаты скоринга в таблице customers.
+    Использует UPSERT (INSERT ON CONFLICT UPDATE).
+    """
+    if not scores:
+        return
 
-# --- 3. Новый эндпоинт ---
-@app.post("/update-settings-and-score", tags=["Admin"])
+    # SQL-запрос для UPSERT
+    # Если customer_id уже есть в базе, мы обновляем его метрики.
+    # Если нет (новый клиент), то вставляем новую строку.
+    query = """
+        INSERT INTO customers (
+            customer_id, email, balance_eur, total_replenished_eur, 
+            risk_score, risk_level, reasons
+        ) VALUES %s
+        ON CONFLICT (customer_id) DO UPDATE SET
+            email = EXCLUDED.email,
+            balance_eur = EXCLUDED.balance_eur,
+            total_replenished_eur = EXCLUDED.total_replenished_eur,
+            risk_score = EXCLUDED.risk_score,
+            risk_level = EXCLUDED.risk_level,
+            reasons = EXCLUDED.reasons;
+    """
+
+    # Подготавливаем данные в виде кортежей для execute_values
+    values = []
+    for row in scores:
+        values.append((
+            int(row["customer_id"]),
+            str(row["email"]),
+            float(row["balance_eur"]),
+            float(row["total_replenished_eur"]),
+            float(row["risk_score"]),
+            str(row["risk_level"]),
+            # ВАЖНО: колонка reasons имеет тип jsonb. 
+            # psycopg2 ожидает строку, поэтому используем json.dumps
+            json.dumps(row["reasons"], ensure_ascii=False)
+        ))
+
+    try:
+        # Подключаемся к БД
+        conn = psycopg2.connect(
+            host=DB_HOST, port=DB_PORT, dbname=DB_NAME, user=DB_USER, password=DB_PASS
+        )
+        cursor = conn.cursor()
+
+        # execute_values делает один быстрый запрос на всю пачку данных
+        execute_values(cursor, query, values)
+        
+        conn.commit()
+        print(f"[DB] Успешно сохранено/обновлено {len(scores)} записей в таблице customers.")
+        
+    except Exception as e:
+        if 'conn' in locals():
+            conn.rollback() # Откатываем транзакцию в случае ошибки
+        print(f"[DB ERROR] Не удалось сохранить скор: {e}")
+        raise e
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+    
+
+@app.post("/update-settings", tags=["Admin"])
 def update_settings_and_score(req: UpdateSettingsRequest):
     try:
-        # 1. Валидация настроек (пришли в json)
+        
         cfg = ModelSettings(**req.settings)
         validate_settings(cfg)
         settings_dict = cfg.to_dict()
 
         save_settings_to_db(settings_dict)
         
+        
         raw_data = get_raw_data_from_db()
 
-        # 4. Пересчитываем скоринг
+        
         snap = preprocess(raw_data)
         scored_df = score(snap, cfg)
         
-        # Превращаем DataFrame в список словарей
-        scores_list = scored_df.to_dict(orient="records")
+        
+        acc_info = snap.accounts[["id", "email", "balance_eur", "totalReplenished_eur"]]
+        full_df = scored_df.merge(
+            acc_info, 
+            left_on="customer_id", 
+            right_on="id", 
+            how="left"
+        )
 
-        # 5. Сохраняем результаты скоринга в БД (Заглушка)
+        # Превращаем DataFrame в список словарей
+        scores_list = full_df.to_dict(orient="records")
+
+        # 5. Сохраняем в БД (вызываем нашу новую функцию)
         save_scores_to_db(scores_list)
 
         return {
