@@ -19,7 +19,7 @@ type CustomersHandler struct {
 // Вообще это можно было всё в int закинуть, но уже пофиг)
 type Customer struct {
 	ID           int      `db:"customer_id" json:"customer_id" example:"42"`
-		Balance      float32  `db:"balance_eur" json:"balance_eur" example:"1337"`
+	Balance      float32  `db:"balance_eur" json:"balance_eur" example:"1337"`
 	TotalDeposit float32  `db:"total_replenished_eur" json:"total_replenished_eur" example:"100500"`
 	RiskScore    float32  `db:"risk_score" json:"risk_score" example:"67"`
 	RiskLevel    string   `db:"risk_level" json:"risk_level" example:"high"`
@@ -60,7 +60,7 @@ func (h *CustomersHandler) GetCustomer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rows, err := h.DB.Query(r.Context(),
-		"SELECT * FROM customers WHERE id = $1", customerID)
+		"SELECT * FROM customers WHERE customer_id = $1", customerID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
