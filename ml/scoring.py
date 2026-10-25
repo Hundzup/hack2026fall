@@ -9,8 +9,8 @@ class ModelSettings:
     weights: dict[str, float] = field(default_factory=lambda: {
         n: m["weight"] for n, m in FEATURES.items()
     })
-    low_max: float = 0.33
-    high_min: float = 0.66
+    low_max: float = 0.2
+    high_min: float = 0.3
 
     def to_dict(self) -> dict:
         return asdict(self)
