@@ -7,7 +7,7 @@
           <th @click="sort('email')">Email <span class="sort-icon">{{ getSortIcon('email') }}</span></th>
           <th @click="sort('balance')">Баланс <span class="sort-icon">{{ getSortIcon('balance') }}</span></th>
           <th @click="sort('total_deposits')">Пополнения <span class="sort-icon">{{ getSortIcon('total_deposits') }}</span></th>
-          <th @click="sort('score')">ISK-Score <span class="sort-icon">{{ getSortIcon('score') }}</span></th>
+          <th @click="sort('score')">Risk-score <span class="sort-icon">{{ getSortIcon('score') }}</span></th>
         </tr>
       </thead>
       <tbody>

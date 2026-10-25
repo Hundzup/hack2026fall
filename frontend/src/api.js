@@ -28,9 +28,12 @@ export const fetchMetrics = async () => {
 export const fetchSettings = async () => {
   // коэффициенты
   return [
-    { key: 'coef_balance', label: 'Вес баланса', value: 1.5 },
-    { key: 'coef_deposits', label: 'Вес пополнений', value: 0.8 },
-    { key: 'coef_activity', label: 'Вес активности', value: 2.0 }
+    { key: 'coef_balance', label: 'Отключено автопродление', value: 0.3 },
+    { key: 'coef_deposits', label: 'Близко истекает услуга', value: 0.7 },
+    { key: 'coef_activity', label: 'Услуга ждёт оплаты', value: 0.1 },
+    { key: 'coef_deposits', label: 'Не хватает средств', value: 0.7 },
+    { key: 'coef_activity', label: 'История неоплаченных продлений', value: 0.1 },
+    { key: 'coef_deposits', label: 'Низкие пополнения', value: 0.7 }
   ]
 }
 

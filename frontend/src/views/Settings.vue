@@ -9,17 +9,14 @@
           <router-link to="/settings" class="nav-item">{{ t.navSettings }}</router-link>
         </nav>
 
-    
         <div class="logo-container">
           <div class="logo-box">
             <span class="logo-letter">é</span>
           </div>
         </div>
 
-    
         <div class="nav-actions">
           
-    
           <div 
             class="lang-selector" 
             @mouseenter="isLangMenuOpen = true" 
@@ -33,7 +30,6 @@
               </svg>
             </button>
 
-            <!-- Выпадающее меню -->
             <div v-if="isLangMenuOpen" class="lang-dropdown">
               <button class="lang-option" @click="setLang('en')">
                 <div class="lang-info">
@@ -62,7 +58,6 @@
       </div>
     </header>
 
-    
     <main class="content">
       <div class="settings-card">
         <h1>{{ t.settingsTitle }}</h1>
@@ -71,14 +66,48 @@
         <div class="form-group">
           <div v-for="coef in coefficients" :key="coef.key" class="coef-row">
             <label>{{ coef.label }}</label>
-            <input v-model.number="coef.value" type="number" step="0.1" />
+            
+            <!-- Обновленный блок с ползунком -->
+            <div class="input-group">
+              
+              <div class="slider-container">
+                <span class="edge-label">0</span>
+                
+                <div class="slider-wrapper">
+                  <!-- Всплывающее облачко с числом -->
+                  <div class="slider-bubble" :style="getBubbleStyle(coef.value)">
+                    {{ Number(coef.value).toFixed(2) }}
+                  </div>
+                  
+                  <input 
+                    type="range" 
+                    v-model.number="coef.value" 
+                    min="0" 
+                    max="1" 
+                    step="0.01" 
+                    class="slider"
+                  />
+                </div>
+                
+                <span class="edge-label">1</span>
+              </div>
+
+              <input 
+                type="number" 
+                v-model.number="coef.value" 
+                min="0" 
+                max="1" 
+                step="0.01" 
+                class="number-input"
+                @blur="clampValue(coef)"
+              />
+            </div>
           </div>
           
           <button class="save-btn" @click="save" :disabled="saving">
             {{ saving ? t.savingBtn : t.saveBtn }}
           </button>
           
-          <!-- Вывод сообщения -->
           <p v-if="message" class="success-msg" :class="{ 'error': isError }">{{ message }}</p>
         </div>
       </div>
@@ -98,17 +127,14 @@ const message = ref('')
 const isError = ref(false)
 const router = useRouter()
 
-
 const isScrolled = ref(false)
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 10
 }
 
-
 const currentLang = ref('ru') 
 const isLangMenuOpen = ref(false) 
 
-// Словари
 const messages = {
   ru: {
     navDashboard: 'Дашборд',
@@ -134,12 +160,34 @@ const messages = {
   }
 }
 
-// Вычисляемый объект с текущим переводом
 const t = computed(() => messages[currentLang.value])
 
-// Функция смены языка
 const setLang = (lang) => {
   currentLang.value = lang
+}
+
+// Ограничение ручного ввода
+const clampValue = (coef) => {
+  if (coef.value === null || coef.value === '') {
+    coef.value = 0;
+  } else if (coef.value < 0) {
+    coef.value = 0;
+  } else if (coef.value > 1) {
+    coef.value = 1;
+  }
+}
+
+// Вычисление позиции для всплывающего облачка
+const getBubbleStyle = (value) => {
+  // Защита от пустых значений
+  const val = value || 0;
+  const percent = val * 100;
+  // Ширина бегунка (кружочка) равна 18px. 
+  // Нам нужно сместить облачко так, чтобы его центр совпадал с центром бегунка.
+  const offset = 9 - (percent * 0.18); 
+  return {
+    left: `calc(${percent}% + ${offset}px)`
+  };
 }
 
 onMounted(async () => {
@@ -151,14 +199,13 @@ onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
 })
 
-// ── Сохранение формы ──
 const save = async () => {
   saving.value = true
   message.value = ''
   isError.value = false
   try {
     await saveSettings(coefficients.value)
-    message.value = t.value.successMsg // Берем перевод из текущего языка
+    message.value = t.value.successMsg
   } catch (e) {
     message.value = t.value.errorMsg
     isError.value = true
@@ -175,14 +222,13 @@ const logout = () => {
 </script>
 
 <style scoped>
-
+/* ... (Стили шапки остаются без изменений) ... */
 .settings-page {
   min-height: 100vh;
   background: linear-gradient(135deg, #eef5f7 0%, #f8f9fa 100%);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   color: #111;
 }
-
 
 .top-navbar {
   position: sticky;
@@ -210,7 +256,6 @@ const logout = () => {
   justify-content: space-between;
 }
 
-/* Левая навигация */
 .nav-links {
   display: flex;
   gap: 8px;
@@ -237,7 +282,6 @@ const logout = () => {
   color: #111;
 }
 
-/* Центральный логотип */
 .logo-container {
   flex: 1;
   display: flex;
@@ -264,7 +308,6 @@ const logout = () => {
   line-height: 1;
 }
 
-/* Правая часть с кнопками */
 .nav-actions {
   flex: 1;
   display: flex;
@@ -307,10 +350,8 @@ const logout = () => {
   background-color: #333333;
 }
 
-/* ── Выпадающее меню языков ── */
 .lang-selector {
   position: relative;
-  /* Отступы и отрицательный margin нужны, чтобы меню не закрывалось, когда ведешь мышку вниз */
   padding-bottom: 8px;
   margin-bottom: -8px; 
 }
@@ -332,7 +373,6 @@ const logout = () => {
   animation: fadeIn 0.2s ease;
 }
 
-/* Невидимый мостик, чтобы меню не закрывалось, когда ведешь мышку от планеты к списку */
 .lang-dropdown::before {
   content: '';
   position: absolute;
@@ -386,9 +426,8 @@ const logout = () => {
   color: #00b894;
 }
 
-/* ── Контентная часть ── */
 .content {
-  max-width: 800px;
+  max-width: 1200px;
   margin: 40px auto;
   padding: 0 24px;
 }
@@ -417,6 +456,7 @@ const logout = () => {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  padding-top: 20px; /* Добавили отступ сверху, чтобы облачко не обрезалось */
 }
 
 .coef-row {
@@ -431,19 +471,118 @@ const logout = () => {
   font-size: 15px;
   font-weight: 500;
   color: #333;
+  width: 35%;
 }
 
-.coef-row input {
+/* ── Стили для группы слайдера ── */
+.input-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 65%;
+  justify-content: flex-end;
+}
+
+/* Контейнер с нулем, ползунком и единицей */
+.slider-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 280px;
+}
+
+.edge-label {
+  font-size: 12px;
+  color: #888;
+  font-weight: 500;
+}
+
+/* Обертка для самого ползунка */
+.slider-wrapper {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+/* Всплывающее облачко с числом */
+.slider-bubble {
+  position: absolute;
+  top: -28px;
+  background-color: #111111;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transform: translateX(-50%);
+  pointer-events: none; /* Чтобы облачко не мешало кликать по ползунку */
+  transition: left 0.1s ease-out;
+  white-space: nowrap;
+}
+
+/* Треугольник снизу облачка */
+.slider-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 4px 4px 0;
+  border-style: solid;
+  border-color: #111111 transparent transparent transparent;
+}
+
+/* Сам ползунок */
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+  margin: 0;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #111111;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #111111;
+  cursor: pointer;
+  border: none;
+}
+
+.number-input {
   padding: 10px 14px;
-  width: 120px;
+  width: 80px;
   border: 1px solid #ddd;
   border-radius: 10px;
   font-size: 15px;
   outline: none;
   transition: border-color 0.2s;
+  text-align: center;
 }
 
-.coef-row input:focus {
+.number-input:focus {
   border-color: #111;
 }
 
@@ -479,7 +618,6 @@ const logout = () => {
   margin-top: 10px;
 }
 
-/* Стиль для ошибки */
 .success-msg.error {
   color: #d63031;
   background: #ffe3e3;

@@ -1,10 +1,10 @@
 <template>
-  <!-- Убрали padding у главного контейнера, чтобы шапка была на всю ширину -->
+  
   <div class="dashboard-page">
     
-    <!-- Верхняя панель (теперь sticky и на всю ширину) -->
+  
     <header class="top-navbar" :class="{ 'is-scrolled': isScrolled }">
-      <!-- Внутренний контейнер для ограничения ширины контента -->
+  
       <div class="nav-container">
         <nav class="nav-links">
           <router-link to="/" class="nav-item">{{ t.navDashboard }}</router-link>
@@ -20,7 +20,7 @@
 
         <div class="nav-actions">
           
-          <!-- Меню языков (открывается по наведению) -->
+  
           <div 
             class="lang-selector" 
             @mouseenter="isLangMenuOpen = true" 
@@ -63,13 +63,13 @@
       </div>
     </header>
 
-    <!-- Контентная часть (с отступами) -->
+    
     <main class="content">
       
-      <!-- Денежная панель -->
+    
       <section class="money-panel">
         <p class="money-title">{{ t.moneyTitle }}</p>
-        <h2 class="money-value">{{ metrics.potential_loss?.toLocaleString() }} ₽</h2>
+        <h2 class="money-value">{{ metrics.potential_loss?.toLocaleString() }} €</h2>
         <p class="money-subtitle">{{ t.moneySubtitle }}</p>
       </section>
 
