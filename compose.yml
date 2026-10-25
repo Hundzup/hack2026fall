@@ -28,10 +28,13 @@ services:
       - net
   db:
     image: postgres:18
+    env_file:
+      - .env
     volumes:
-      - db_data:/var/lib/postgres:rw
+      - db_data:/var/lib/postgresql:rw
     ports:
-      - "127.0.0.1:5432:5432/tcp"
+      # - "127.0.0.1:5432:5432/tcp"
+      - "5432:5432/tcp"
     networks:
       - net
 

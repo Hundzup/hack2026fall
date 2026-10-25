@@ -6,6 +6,9 @@
 
 ```bash
 # В корне репозитория
+
+cp .env.example .env
+# nano .env
 docker compose up
 ```
 
